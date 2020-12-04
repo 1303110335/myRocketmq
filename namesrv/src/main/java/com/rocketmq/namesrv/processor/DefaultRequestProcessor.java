@@ -35,7 +35,7 @@ public class DefaultRequestProcessor implements NettyRequestProcessor {
 
     @Override
     public RemotingCommand processCommand(ChannelHandlerContext ctx, RemotingCommand request) throws RemotingCommandException {
-        log.debug("receive request, ctx = {}, remoteAddr = {}, request = {}",
+        log.debug("DefaultRequestProcessor >> receive request, ctx = {}, remoteAddr = {}, request = {}",
                 ctx, RemotingHelper.parseChannelRemoteAddr(ctx.channel()), request);
 
         switch (request.getCode()) {

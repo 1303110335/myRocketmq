@@ -7,6 +7,7 @@ package com.rocketmq.remoting.netty;
 import com.rocketmq.remoting.InvokeCallback;
 import com.rocketmq.remoting.common.SemaphoreReleaseOnlyOnce;
 import com.rocketmq.remoting.protocol.RemotingCommand;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author xuleyan
  * @version ResponseFuture.java, v 0.1 2020-10-13 9:37 下午
  */
+@Slf4j
 public class ResponseFuture {
     private final int opaque;
     private final long timeoutMillis;
@@ -57,12 +59,15 @@ public class ResponseFuture {
     }
 
     public RemotingCommand waitResponse(final long timeoutMillis) throws InterruptedException {
+        log.info("{} >> countdownLatch >> await", Thread.currentThread().getName());
         this.countDownLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
+        log.info("{} >> countdownLatch >> await down >> responseCommand = {}", Thread.currentThread().getName(), this.responseCommand);
         return this.responseCommand;
     }
 
     public void putResponse(final RemotingCommand responseCommand) {
         this.responseCommand = responseCommand;
+        log.info("{} >> countdownLatch >> countdown", Thread.currentThread().getName());
         this.countDownLatch.countDown();
     }
 

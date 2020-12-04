@@ -16,13 +16,16 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.serialization.ClassResolvers;
 import io.netty.handler.codec.serialization.ObjectDecoder;
 import io.netty.handler.codec.serialization.ObjectEncoder;
+import lombok.extern.slf4j.Slf4j;
 
+import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 
 /**
  * @author xuleyan
  * @version RemotingServer.java, v 0.1 2020-10-10 10:44 上午
  */
+@Slf4j
 public class NettyRemotingServer extends NettyRemotingAbstract implements RemotingService {
 
     private final NettyServerConfig nettyServerConfig;
@@ -42,6 +45,7 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
             ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(parentGroup, childGroup)
                     .channel(NioServerSocketChannel.class)
+                    .localAddress(new InetSocketAddress(nettyServerConfig.getListenPort()))
                     .childHandler(new ChannelInitializer<SocketChannel>() {
 
                         @Override
@@ -54,8 +58,8 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                             pipeline.addLast(new NettyServerHandler());
                         }
                     });
-            ChannelFuture future = bootstrap.bind(8888).sync();
-            System.out.println("服务器已启动");
+            ChannelFuture future = bootstrap.bind().sync();
+            log.info("服务器已启动 >> port = {}, remoteAddress = {}", nettyServerConfig.getListenPort(), future.channel().remoteAddress());
             future.channel().closeFuture().sync();
 
         } catch (InterruptedException e) {

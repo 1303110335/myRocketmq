@@ -74,6 +74,8 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
         this.nettyClientConfig = nettyClientConfig;
         this.channelEventListener = channelEventListener;
 
+        // TODO 调用方法处理
+        namesrvAddrList.set(Arrays.asList("127.0.0.1:9876"));
         int publicThreadNums = nettyClientConfig.getClientCallbackExecutorThreads();
         if (publicThreadNums <= 0) {
             publicThreadNums = 4;
@@ -129,7 +131,7 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
 
     @Override
     public List<String> getNameServerAddressList() {
-        return null;
+        return this.namesrvAddrList.get();
     }
 
     @Override

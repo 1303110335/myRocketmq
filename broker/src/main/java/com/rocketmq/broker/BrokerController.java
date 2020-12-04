@@ -156,6 +156,7 @@ public class BrokerController {
                 this.filterServerManager.buildNewFilterServerList(),
                 oneway,
                 this.brokerConfig.getRegisterBrokerTimeoutMills());
+        log.info("registerBrokerResult = {}", registerBrokerResult);
     }
 
     public void start() {

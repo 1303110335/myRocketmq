@@ -57,9 +57,11 @@ public abstract class NettyRemotingAbstract {
         if (cmd != null) {
             switch (cmd.getType()) {
                 case REQUEST_COMMAND:
+                    // 服务器处理请求
                     processRequestCommand(ctx, cmd);
                     break;
                 case RESPONSE_COMMAND:
+                    // 客户端处理返回数据
                     processResponseCommand(ctx, cmd);
                     break;
                 default:
@@ -69,7 +71,22 @@ public abstract class NettyRemotingAbstract {
     }
 
     public void processResponseCommand(final ChannelHandlerContext ctx, final RemotingCommand cmd) {
+        final int opaque = cmd.getOpaque();
+        final ResponseFuture responseFuture = responseTable.get(opaque);
+        if (responseFuture != null) {
+            responseFuture.setResponseCommand(cmd);
+            responseFuture.release();
+            responseTable.remove(opaque);
 
+            if (responseFuture.getInvokeCallback() != null) {
+                executeInvokeCallback(responseFuture);
+            } else {
+                responseFuture.putResponse(cmd);
+            }
+        } else {
+            log.warn("receive response, but not matched any request, " + RemotingHelper.parseChannelRemoteAddr(ctx.channel()));
+            log.warn(cmd.toString());
+        }
     }
 
     public void processRequestCommand(final ChannelHandlerContext ctx, final RemotingCommand cmd) {
