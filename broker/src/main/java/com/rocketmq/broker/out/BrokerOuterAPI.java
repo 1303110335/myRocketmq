@@ -47,6 +47,8 @@ public class BrokerOuterAPI {
     }
 
 
+
+
     /**
      * 注册到多个 Namesrv
      *
@@ -146,5 +148,11 @@ public class BrokerOuterAPI {
         }
         return null;
 
+    }
+
+    public void start() {
+        if (remotingClient != null) {
+            this.remotingClient.start();
+        }
     }
 }

@@ -56,7 +56,7 @@ public class BrokerServer extends RemotingAbstract {
                         }
                     });
 
-            ChannelFuture future = bootstrap.connect("127.0.0.1", 8888).sync();
+            ChannelFuture future = bootstrap.connect("localhost", 9876).sync();
             // 要传输的参数
             RemoteCommand remoteCommand = new RemoteCommand();
             remoteCommand.setBody("我是haha".getBytes(StandardCharsets.UTF_8));

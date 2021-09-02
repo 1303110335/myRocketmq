@@ -8,6 +8,7 @@ import com.rocketmq.remoting.ChannelEventListener;
 import com.rocketmq.remoting.RPCHook;
 import com.rocketmq.remoting.RemotingService;
 import com.rocketmq.remoting.protocol.RemotingCommand;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -20,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author xuleyan
@@ -28,21 +31,39 @@ import java.util.concurrent.ExecutorService;
 @Slf4j
 public class NettyRemotingServer extends NettyRemotingAbstract implements RemotingService {
 
+    private final ServerBootstrap bootstrap;
     private final NettyServerConfig nettyServerConfig;
     private final ChannelEventListener channelEventListener;
+
+    private final EventLoopGroup parentGroup;
+    private final EventLoopGroup childGroup;
 
     public NettyRemotingServer(final NettyServerConfig nettyServerConfig, final ChannelEventListener channelEventListener) {
         super(nettyServerConfig.getServerOnewaySemaphoreValue(), nettyServerConfig.getServerAsyncSemaphoreValue());
         this.nettyServerConfig = nettyServerConfig;
         this.channelEventListener = channelEventListener;
+
+        bootstrap = new ServerBootstrap();
+        parentGroup = new NioEventLoopGroup(1, new ThreadFactory() {
+            private AtomicInteger threadIndex = new AtomicInteger(0);
+            @Override
+            public Thread newThread(Runnable r) {
+                return new Thread(r, String.format("parentGroup_%d", this.threadIndex.incrementAndGet()));
+            }
+        });
+
+        childGroup = new NioEventLoopGroup(nettyServerConfig.getServerSelectorThreads(), new ThreadFactory() {
+            private AtomicInteger threadIndex = new AtomicInteger(0);
+            @Override
+            public Thread newThread(Runnable r) {
+                return new Thread(r, String.format("childGroup_%d", this.threadIndex.incrementAndGet()));
+            }
+        });
     }
 
     @Override
     public void start() {
-        EventLoopGroup parentGroup = new NioEventLoopGroup();
-        EventLoopGroup childGroup = new NioEventLoopGroup();
         try {
-            ServerBootstrap bootstrap = new ServerBootstrap();
             bootstrap.group(parentGroup, childGroup)
                     .channel(NioServerSocketChannel.class)
                     .localAddress(new InetSocketAddress(nettyServerConfig.getListenPort()))
@@ -60,19 +81,21 @@ public class NettyRemotingServer extends NettyRemotingAbstract implements Remoti
                     });
             ChannelFuture future = bootstrap.bind().sync();
             log.info("服务器已启动 >> port = {}, remoteAddress = {}", nettyServerConfig.getListenPort(), future.channel().remoteAddress());
-            future.channel().closeFuture().sync();
+            //future.channel().closeFuture().sync();
 
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } finally {
-            parentGroup.shutdownGracefully();
-            childGroup.shutdownGracefully();
         }
     }
 
     @Override
     public void shutdown() {
-
+        if (parentGroup != null) {
+            parentGroup.shutdownGracefully();
+        }
+        if (childGroup != null) {
+            childGroup.shutdownGracefully();
+        }
     }
 
     @Override

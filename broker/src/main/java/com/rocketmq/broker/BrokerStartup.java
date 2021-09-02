@@ -55,6 +55,7 @@ public class BrokerStartup {
         final NettyServerConfig nettyServerConfig = new NettyServerConfig();
         final NettyClientConfig nettyClientConfig = new NettyClientConfig();
         nettyServerConfig.setListenPort(10911);
+        nettyServerConfig.setServerSelectorThreads(3);
 
         brokerConfig.setNamesrvAddr("localhost:9876");
         String namesrvAddr = brokerConfig.getNamesrvAddr();

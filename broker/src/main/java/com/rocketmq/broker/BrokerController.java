@@ -78,7 +78,7 @@ public class BrokerController {
     }
 
     public void shutdown() {
-
+        this.remotingServer.shutdown();
     }
 
     public BrokerConfig getBrokerConfig() {
@@ -164,6 +164,10 @@ public class BrokerController {
 
         if (this.remotingServer != null) {
             this.remotingServer.start();
+        }
+
+        if (this.brokerOuterAPI != null) {
+            this.brokerOuterAPI.start();
         }
 
         this.registerBrokerAll(true, false);
